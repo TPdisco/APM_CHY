@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+  简化版行为树：navigate_through_poses_w_replanning_no_recovery.xml
+  移除了所有恢复行为（ClearEntireCostmap, Spin, Wait, BackUp等）
+  仅保留路径规划与跟踪核心功能
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <!-- 使用 PipelineSequence 替代 RecoveryNode -->
+    <PipelineSequence name="NavigateWithReplanning">
+      <!-- 规划部分：以 0.333 Hz 重新规划路径 -->
+      <RateController hz="0.333">
+        <ReactiveSequence>
+          <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.7"/>
+          <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridBased"/>
+        </ReactiveSequence>
+      </RateController>
+      <!-- 执行部分：跟随路径 -->
+      <FollowPath path="{path}" controller_id="FollowPath"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

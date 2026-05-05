@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <Sequence>
+        <Fallback>
+          <GoalReached goal="{goal}"/>
+          <ComputePathToPose goal="{goal}" path="{path}"/>
+        </Fallback>
+        <FollowPath path="{path}"/>
+      </Sequence>
+      <ReactiveSequence>
+        <AlwaysSuccess/>
+        <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
+      </ReactiveSequence>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>

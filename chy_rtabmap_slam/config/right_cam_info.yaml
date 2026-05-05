@@ -1,0 +1,5 @@
+image_width: 640
+image_height: 480
+camera_matrix: [320, 0, 320, 0, 320, 240, 0, 0, 1]
+distortion_coefficients: [0,0,0,0,0]
+projection: [320, 0, 320, -38.4,  0, 320, 240, 0, 0, 0, 1, 0]  # Tx = -0.12*320 = -38.4

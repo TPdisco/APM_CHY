@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!--
+  简化版行为树：navigate_to_pose_w_replanning_no_recovery.xml
+  移除了所有恢复行为
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <PipelineSequence name="NavigateWithReplanning">
+      <RateController hz="1.0">
+        <Sequence>
+          <GoalUpdated/>
+          <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+        </Sequence>
+      </RateController>
+      <FollowPath path="{path}" controller_id="FollowPath"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>
