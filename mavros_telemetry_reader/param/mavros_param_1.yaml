@@ -1,0 +1,13 @@
+# mavros_param.yaml
+mavros:
+  ros__parameters: {}
+
+mavros_router:
+  ros__parameters: {}
+
+mavros_node:
+  ros__parameters:
+    fcu_url: /dev/ttyACM0:921600
+    gcs_url: tcp-l://:5670
+
+

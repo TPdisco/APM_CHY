@@ -1,10 +1,10 @@
 # config/nav2_stereo_inertial.yaml
-amcl:
-  ros__parameters:
-    # 禁用 AMCL，使用 RTAB-Map 定位
-    use_sim_time: false
-    # 如果 RTAB-Map 定位不稳定，可以启用 AMCL 作为后备
-    # 但通常双目惯导的 VIO 足够精确
+# amcl:
+#   ros__parameters:
+#     # 禁用 AMCL，使用 RTAB-Map 定位
+#     use_sim_time: false
+#     # 如果 RTAB-Map 定位不稳定，可以启用 AMCL 作为后备
+#     # 但通常双目惯导的 VIO 足够精确
 
 bt_navigator:
   ros__parameters:
@@ -84,8 +84,8 @@ controller_server:
     # 通用目标检查器
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.1
+      yaw_goal_tolerance: 0.1
       stateful: true
     
     # 进度检查器
@@ -94,48 +94,132 @@ controller_server:
       required_movement_radius: 0.25
       movement_time_allowance: 10.0
     
-    # DWB 局部规划器
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory: false
-      # 增加这些参数
-      sim_time: 2.0  # 增加预测时间
-      max_vel_xy: 0.5
-      min_vel_xy: -0.5
-      # 考虑无人机特性
-      xy_goal_tolerance: 0.2
-      yaw_goal_tolerance: 0.17
-      latch_xy_goal_tolerance: true
+      # MPPI 局部规划器
+      plugin: "nav2_mppi_controller::MPPIController"
       
-      min_vel_x: -0.5
-      max_vel_x: 0.5
-      min_vel_y: -0.5
-      max_vel_y: 0.5
-      max_vel_theta: 1.0
-      min_speed_xy: 0.0       # 允许纯旋转
-      max_speed_xy: 0.5
-      min_speed_theta: 0.2
-      acc_lim_x: 2.5
-      acc_lim_y: 2.5
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
-      decel_lim_y: -2.5
-      decel_lim_theta: -3.2
-      vx_samples: 20
-      vy_samples: 10
-      vtheta_samples: 20
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 0.1
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "PreferForward"]
-      BaseObstacle.scale: 0.02
-      PathDist.scale: 32.0
-      PreferForward.scale: 0.0     # 多旋翼不需要偏好前进
-      PathAlign.scale: 10.0        # 启用路径对齐
-      GoalAlign.scale: 10.0        # 启用目标对齐
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
+      motion_model: "Omni"   # 关键：显式声明全向运动模型
+      
+      # 速度约束
+      vx_min: -0.4
+      vx_max: 0.4
+      vy_min: -0.4           # 侧向速度范围
+      vy_max: 0.4
+      wz_max: 0.4            # 偏航角速度
+      
+      # ✅ 新增：加速度约束
+      ax_max: 0.5
+      ax_min: -0.5
+      ay_max: 0.5
+      ay_min: -0.5
+      az_max: 1.0
+
+      # 采样标准差（控制探索范围）
+      vx_std: 0.2
+      vy_std: 0.2            # 侧向采样扰动
+      wz_std: 0.2
+      
+      # ✅ 新增/调整：优化器参数
+      time_steps: 30          # 80 → 56
+      batch_size: 1000         # 2000 → 1000
+      gamma: 0.015
+      iteration_count: 1
+      prune_distance: 1.5
+      reset_period: 1.0       # Humble 特有
+
+      # ✅ 新增：Critics 配置（全向无人机关键！）
+      # 已移除 PreferForwardCritic 和 PathAlignCritic
+      critics: ["ConstraintCritic", "CostCritic", "GoalCritic", "GoalAngleCritic", "PathFollowCritic", "PathAngleCritic"]
+
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.81
+        critical_cost: 300.0
+        consider_footprint: false
+        collision_cost: 1000000.0
+        near_goal_distance: 0.5
+        trajectory_point_step: 2
+
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.4
+
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 1.0
+        mode: 0
+      # DWB 局部规划器
+      # plugin: "dwb_core::DWBLocalPlanner"
+      # debug_trajectory: false
+      # # 增加这些参数
+      # sim_time: 2.0  # 增加预测时间
+      # max_vel_xy: 0.5
+      # min_vel_xy: -0.5
+      # # 考虑无人机特性
+      # xy_goal_tolerance: 0.2
+      # yaw_goal_tolerance: 0.17
+      # latch_xy_goal_tolerance: true
+      
+      # min_vel_x: -0.5
+      # max_vel_x: 0.5
+      # min_vel_y: -0.5
+      # max_vel_y: 0.5
+      # max_vel_theta: 1.0
+      # min_speed_xy: 0.0       # 允许纯旋转
+      # max_speed_xy: 0.5
+      # min_speed_theta: 0.2
+      # acc_lim_x: 2.5
+      # acc_lim_y: 2.5
+      # acc_lim_theta: 3.2
+      # decel_lim_x: -2.5
+      # decel_lim_y: -2.5
+      # decel_lim_theta: -3.2
+      # # 速度采样参数（针对全向移动优化）
+      # # vx/vy/vtheta 采样数应该一致，确保全向移动灵活性
+      # vx_samples: 20           # X方向（前进/后退）
+      # vy_samples: 20           # Y方向（左/右平移）- 从10增加到20
+      # vtheta_samples: 20       # 角速度（旋转）
+      # linear_granularity: 0.05
+      # angular_granularity: 0.025
+      # transform_tolerance: 0.1
+      # # DWB 评分器（critics）配置
+      # # 注意：已从 critics 列表中删除 PreferForward，因为无人机可以全向移动
+      # # PreferForward 会导致 Nav2 只发布正向速度，影响无人机向后飞行的能力
+      # critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist"]
+      # # critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "PreferForward"]  # 原配置（包含 PreferForward）
+      # BaseObstacle.scale: 0.02
+      # PathDist.scale: 32.0
+      # # PreferForward.scale: 0.0     # 已删除：多旋翼不需要偏好前进方向
+      # PathAlign.scale: 12.0        # 增加路径对齐权重（鼓励沿路径移动）
+      # GoalAlign.scale: 12.0        # 增加目标对齐权重（鼓励向目标移动）
+      # RotateToGoal.scale: 5.0      # 降低旋转到目标权重（鼓励全向移动而不是旋转）
+      # RotateToGoal.slowing_factor: 5.0
+      # RotateToGoal.lookahead_time: -1.0
 
 planner_server:
   ros__parameters:
@@ -144,12 +228,18 @@ planner_server:
     expected_planner_frequency: 2.0
     planner_plugins: ["GridBased"]
     
-    # NavFn 全局规划器
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.5                    # 目标容忍度
-      use_astar: true                   # A* 算法
-      allow_unknown: true               # 允许穿越未知区域
+    # nav2_smac_planner/SmacPlannerLattice (基于运动学的路径)
+    # nav2_smac_planner/SmacPlannerHybrid 考虑运动学约束
+      plugin: "nav2_smac_planner/SmacPlanner2D"  # 纯 2D A*，适合全向移动
+      tolerance: 0.5
+
+    # # NavFn 全局规划器
+    # GridBased:
+    #   plugin: "nav2_navfn_planner/NavfnPlanner"
+    #   tolerance: 0.5                    # 目标容忍度
+    #   use_astar: true                   # A* 算法
+    #   allow_unknown: true               # 允许穿越未知区域
 
 smoother_server:
   ros__parameters:
@@ -171,15 +261,19 @@ behavior_server:
     local_costmap_topic: local_costmap/costmap
     global_costmap_topic: global_costmap/costmap
     cycle_frequency: 10.0
-    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait", "assisted_teleop"]
+    behavior_plugins: ["spin", "backup","wait", "assisted_teleop"]
+
+    # 无人机专用：调整 recovery behaviors 参数，减少不必要的触发
     spin:
       plugin: "nav2_behaviors/Spin"
+      max_rotational_velocity: 0.3    # 降低旋转速度（避免过度旋转）
+      rotational_vel_increment: 0.05
     backup:
       plugin: "nav2_behaviors/BackUp"
-    drive_on_heading:
-      plugin: "nav2_behaviors/DriveOnHeading"
+      backup_speed: 0.05               # 降低后退速度
     wait:
       plugin: "nav2_behaviors/Wait"
+      wait_time: 1.0                  # 减少等待时间
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
 
@@ -187,20 +281,21 @@ behavior_server:
 global_costmap:
   global_costmap:
     ros__parameters:
-      update_frequency: 1.0
+      update_frequency: 2.0
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
       track_unknown_space: true
       always_send_full_costmap: true
-      rolling_window: false       #保持非滚动，但设置更大的边界
-      width: 50                   # 增大尺寸
-      height: 50
-      origin_x: -25.0             # 以 (0,0) 为中心
-      origin_y: -25.0
+      rolling_window: false
+      width: 60
+      height: 60
+      origin_x: -30.0
+      origin_y: -30.0
       resolution: 0.05
       
       # 层配置
+      # 注意：map_server 需要 lifecycle_manager 激活（已在 rtabmap_nav2_bringup.launch.py 中添加）
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       
       # 静态层 - RTAB-Map 栅格地图
@@ -241,14 +336,14 @@ global_costmap:
 local_costmap:
   local_costmap:
     ros__parameters:
-      update_frequency: 5.0
+      update_frequency: 15.0
       publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link
       use_sim_time: True
       rolling_window: true
-      width: 3
-      height: 3
+      width: 6
+      height: 6
       resolution: 0.05
       robot_radius: 0.22
       plugins: ["voxel_layer", "inflation_layer"]
@@ -261,13 +356,13 @@ local_costmap:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
         publish_voxel_map: True
-        origin_z: 0.0
+        origin_z: -0.5
         z_resolution: 0.2
-        z_voxels: 20        # 30 * 0.1 = 3 米高度范围
-        # 结果 z 范围：-1.0 到 2.0 米
+        z_voxels: 25
+        # 结果 z 范围：-0.5 到 4.5 米（覆盖相机原点 z=-0.07）
         max_obstacle_height: 5.0
-        min_obstacle_height: 0.0
-        unknown_threshold: 15    # 未知单元阈值
+        min_obstacle_height: -0.3
+        unknown_threshold: 15
         mark_threshold: 0
         # observation_sources: scan
         # scan:
@@ -290,9 +385,9 @@ local_costmap:
           raytrace_range: 3.0
           clearing: true
           marking: true
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+      # static_layer:
+      #   plugin: "nav2_costmap_2d::StaticLayer"
+      #   map_subscribe_transient_local: True
       always_send_full_costmap: True
       # # 确保清除服务可用
       # clearing_services:  
@@ -333,10 +428,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [0.5, 0.5, 1.0]      # [vx, vy, vtheta]
-    min_velocity: [-0.5, -0.5, -1.0]
-    max_accel: [2.5, 2.5, 3.2]
-    max_decel: [-2.5, -2.5, -3.2]
+    max_velocity: [0.4, 0.4, 0.4]      # [vx, vy, vtheta]
+    min_velocity: [-0.4, -0.4, -0.4]
+    max_accel: [1.0, 1.0, 1.5]
+    max_decel: [-2.0, -2.0, -2.0]
     odom_topic: "/ap/odometry"          # 或 /ap/twist/filtered
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

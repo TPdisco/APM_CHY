@@ -1,25 +1,17 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>chy_rtabmap_slam</name>
+  <name>copter_run_cpp</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="disco@todo.todo">disco</maintainer>
+  <description>无人机运动控制节点：切换GUIDED模式、解锁、发布速度命令</description>
+  <maintainer email="1009417081@qq.com">disco</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>ardupilot_msgs</depend>
-  <depend>nav_msgs</depend>
-
-  <exec_depend>rclpy</exec_depend>
-  <depend>cv_bridge</depend>
-  <depend>libopencv-dev</depend>
-  <!-- Python 依赖 numpy / opencv (pip install numpy opencv-python) -->
-  <exec_depend>python3-numpy</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

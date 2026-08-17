@@ -66,6 +66,36 @@ install(TARGETS
   map_pub
   DESTINATION lib/${PROJECT_NAME})
 
+add_executable(slam_launch_controller src/slam_launch_controller.cpp)
+ament_target_dependencies(slam_launch_controller rclcpp ardupilot_msgs)
+target_compile_features(slam_launch_controller PUBLIC cxx_std_17)
+
+install(TARGETS slam_launch_controller
+  DESTINATION lib/${PROJECT_NAME})
+
+# ===== 水下视觉退化节点 =====
+find_package(cv_bridge REQUIRED)
+find_package(OpenCV REQUIRED)
+
+add_executable(underwater_visual_degrader src/underwater_visual_degrader.cpp)
+ament_target_dependencies(underwater_visual_degrader
+  rclcpp sensor_msgs cv_bridge)
+target_link_libraries(underwater_visual_degrader ${OpenCV_LIBS})
+target_compile_features(underwater_visual_degrader PUBLIC cxx_std_17)
+
+install(TARGETS underwater_visual_degrader
+  DESTINATION lib/${PROJECT_NAME})
+
+# ===== CLAHE 图像增强节点 =====
+add_executable(clahe_enhancer src/clahe_enhancer.cpp)
+ament_target_dependencies(clahe_enhancer
+  rclcpp sensor_msgs cv_bridge)
+target_link_libraries(clahe_enhancer ${OpenCV_LIBS})
+target_compile_features(clahe_enhancer PUBLIC cxx_std_17)
+
+install(TARGETS clahe_enhancer
+  DESTINATION lib/${PROJECT_NAME})
+
 
 
 
@@ -76,6 +106,11 @@ install(DIRECTORY include/
     DESTINATION include
 )
 
+install(PROGRAMS
+  scripts/save_map_on_exit.py
+  scripts/stereo_depth_from_stereo.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}

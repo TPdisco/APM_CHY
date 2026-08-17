@@ -22,67 +22,21 @@ def generate_launch_description():
         # 'subscribe_stereo': True,
         'subscribe_rgbd': True,
         'subscribe_odom_info': True,
+        'publish_tf': False,
         
         # ========== IMU 核心设置 ==========
         'wait_imu_to_init': True,           # 等待 IMU 初始化（关键！）
-        # 'use_imu': True,                    # 启用 IMU
-        # 'imu_topic': '/imu',           # IMU 话题
-        # 'imu_frame_id': 'iris/imu_link/imu_sensor',         # IMU 坐标系（必须与 TF 中的 child_frame 匹配）
-        # 'always_check_imu_tf': True,        # 始终检查IMU TF
-        # 'Imu/BufferSize': '100',             # IMU 内部缓冲大小
-        # 'Imu/MaxInterval': '0.1',            # IMU 最大插值间隔
 
-        # # ========== IMU 预处理 ==========
-        # 'Imu/FilterStrategy': '1',          # 0=无滤波, 1=卡尔曼, 2=Madgwick
-        # 'Imu/GravitySigma': '0.0',          # 重力加速度标准差(0=自动估计)
-
-        # # ========== 时间设置 ==========
         'use_sim_time': True,
         'approx_sync': True,
-        'approx_sync_max_interval': 0.05,    # 10ms同步窗口
+        'approx_sync_max_interval': 0.1,    # 10ms同步窗口
         'sync_queue_size': 20,                    # 输入队列长度
         'topic_queue_size': 100,
         
-        # # ========== 估计器选择 ==========
-        # # 0=视觉+IMU (OKVIS风格), 1=纯视觉PnP, 2=仅IMU
-        # 'Vis/EstimationType': '0',
-        
-        # # ========== 视觉-IMU融合权重 ==========
-        # 'Vis/ImuGravity': '9.81',           # 重力加速度值
-        # 'Vis/ImuBiasModel': '0',            # 0=常数偏置, 1=随机游走
-
-        # # ========== TF设置 ==========
-        # 'publish_tf': True,
-        # 'wait_for_transform': 0.2,           # TF等待超时
-        # 'publish_frequency': 30.0,           # TF发布频率
-        
-        # ========== 特征检测（性能关键） ==========
-        # 'Kp/MaxFeatures': '300',             # 每帧特征点数
         'Kp/DetectorStrategy': '2',          # 2=ORB（快速）
         'Vis/FeatureType': '2',              # 2=ORB描述子
         'Vis/CorType': '0',                 # 0=词袋匹配, 1=光学流
 
-        # "Vis/MaxDepth": "8.0",            # 最大深度4米（滤除远处特征，提升精度）
-        # "Vis/CorNNDR": "0.8",           # 最近邻比率0.7（提升匹配质量）默认0.8
-        # "Vis/MinDepth": "0.1",            # 最小深度0.3米（滤除近处噪声）
-        
-        # # ========== 运动模型 ==========
-        # 'Odom/Strategy': '0',               # 0=帧到帧, 1=帧到地图
-
-        # # ========== 立体匹配 ==========
-        # 'Stereo/MaxDisparity': '256.0',      # 最大视差
-        # 'Stereo/MinDisparity': '0',
-        
-        # # ========== 初始化与跟踪 ==========
-        # 'Vis/MinInliers': '8',              # PnP最小内点
-        # 'Odom/MinInliers': '8',
-        
-        # # ========== 性能保护 ==========
-        # 'Rtabmap/TimeThr': '0.4',            # 单帧最大处理时间200ms
-
-        # # ========== 新增：丢失恢复机制 ==========
-        # 'Odom/ResetCountdown': '1',          # 【新增】丢失后立即重置，快速恢复
-        # 'Vis/MaxFeatures': '600',            # 【新增】备用特征数上限
     }
 
     # rtabmap_slam (rtabmap) - 标准参数
@@ -99,32 +53,9 @@ def generate_launch_description():
 
         # ========== 时间设置 ==========
         'use_sim_time': True,
-        # 'approx_sync': True,
-        
-        # ========== 回环检测 ==========
-        # 'Rtabmap/DetectionRate': '1',        # 处理频率2Hz
-        # 'Rtabmap/LoopThr': '0.1',           # 回环阈值（越小越宽松）
-        
-        # ========== 特征与更新 ==========
-        # 'Kp/MaxFeatures': '300',             # SLAM特征数可略高于odom
         'RGBD/LinearUpdate': '0',         # 最小平移更新距离(5cm)
         'RGBD/AngularUpdate': '0',        # 最小旋转更新角度(0.05rad≈3°)
-        
-        # ========== 性能优化 ==========
-        # 'Rtabmap/TimeThr': '0.3',            # 单帧最大处理时间300ms
-        # 'sync_queue_size': 10,                     # 短队列降低延迟
-        
-        # 'Grid/CellSize': '0.1',              # 栅格分辨率10cm
-        # 'Mem/ReduceGraph': 'true',           # 【新增】启用图优化简化
-        
-        # ========== TF设置 ==========
-        # 'wait_for_transform': 0.8,
-        # 'publish_tf': True,                 # SLAM不发布TF（由odom发布odom->base）
-
-        # 'Rtabmap/StartNewMapOnLoopClosure': 'false',
-        # ============================================
-        # ========== OctoMap 3D 地图生成配置 ==========
-        # ============================================
+    
         
         # ---- 核心开关 ----
         'Grid/3D': 'true',                   # 启用 3D 占用网格（OctoMap 必需）
@@ -144,13 +75,6 @@ def generate_launch_description():
         # ========== 2D栅格地图配置 ==========
         # 启用2D地图
         'Grid/FromDepth': 'true',          # 从深度图生成2D网格（必需）
-
-        # 'Grid/MaxObstacleHeight': '3',   # 最大障碍物高度（米）
-        # 'Grid/MinGroundHeight': '-0.1',    # 地面以下的最小高度
-        # 'Grid/NormalsSegmentation': 'true', # 使用法向量分割地面
-        # 'Grid/MaxGroundAngle': '30',       # 地面最大角度（度）
-        # 'Grid/RangeMax': '5.0',           # 最大探测范围（米）
-        # 'Grid/RangeMin': '0.2',            # 最小探测范围（米）
         
         # 2D地图发布设置
         'grid_map': 'true',                # 启用2D栅格地图发布
@@ -240,7 +164,10 @@ def generate_launch_description():
             package='rtabmap_sync', executable='stereo_sync', output='screen',
             namespace='stereo_camera',
             parameters=[{
-                'sync_queue_size': 30,
+                    'approx_sync': True,              # ← 加这里
+                    'approx_sync_max_interval': 0.1, # 同步窗口，根据你的帧率调整
+                    'sync_queue_size': 30,
+                    'use_sim_time': True,             # 仿真环境建议加上
                 }],
                 remappings=[
                     ('left/image_rect', '/stereo/left/image_raw'),
@@ -262,13 +189,15 @@ def generate_launch_description():
             parameters=[slam_standard],
             remappings=remappings,
             arguments=['-d', LaunchConfiguration("args"),
-                    '--ros-args', '--log-level', 'info'])
+                    '--ros-args', '--log-level', 'info']),
 
-        # Node(
-        #     package='rtabmap_viz', executable='rtabmap_viz', output='screen',
-        #     parameters=[slam_standard,
-        #                 {'odometry_node_name': "stereo_odometry"}],
-        #     remappings=remappings,
-        #     arguments=['--ros-args', '--log-level', 'info'])
+        Node(
+            package='rtabmap_viz', executable='rtabmap_viz', output='screen',
+            parameters=[slam_standard,
+                        {'odometry_node_name': "stereo_odometry"}],
+            remappings=remappings,
+            arguments=['--ros-args', '--log-level', 'info'])
                 
     ])
+
+    # ros2 run nav2_map_server map_saver_cli -f ~/my_map

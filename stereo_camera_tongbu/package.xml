@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>stereo_camera_tongbu</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="disco@todo.todo">disco</maintainer>
+  <license>TODO: License declaration</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>message_filters</depend>
+  <depend>tf2_ros</depend>
+  <depend>geometry_msgs</depend>
+
+  <!-- 移除 tf_transformations 依赖 -->
+  <!-- <depend>tf_transformations</depend> -->
+
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+  
+
+  <!-- ROS2 Gazebo Bridge -->
+  <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_image</depend>
+  
+  <!-- 图像处理工具 -->
+  <depend>image_tools</depend>
+
+  <!-- Python 依赖（如果有的话） -->
+  <exec_depend>python3-numpy</exec_depend>
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
