@@ -30,6 +30,11 @@ install(TARGETS copter_run_cpp_node
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})
 
+# 安装 Python 可执行脚本
+install(PROGRAMS
+  scripts/camera_recorder.py
+  DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)

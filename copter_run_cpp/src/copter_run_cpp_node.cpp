@@ -72,9 +72,10 @@ public:
     publishVelocity(0.0, 0.0, 0.0, 0.0);
     rclcpp::sleep_for(std::chrono::seconds(1));
 
-    // 步骤5: 开始持续发送前进速度命令
-    RCLCPP_INFO(this->get_logger(), "开始发送前进速度命令: %.1f m/s", forward_speed_);
+    // 步骤5: 开始前进2s后退2s循环
+    RCLCPP_INFO(this->get_logger(), "开始循环运动: 前进2s/后退2s, 速度=%.1f m/s", forward_speed_);
 
+    start_time_ = this->now();
     auto period = std::chrono::milliseconds(static_cast<int>(1000.0 / publish_rate));
     timer_ = this->create_wall_timer(period, std::bind(&CopterRunNode::timerCallback, this));
   }
@@ -134,13 +135,18 @@ private:
 
   void timerCallback()
   {
-    publishVelocity(forward_speed_, 0.0, 0.0, 0.0);
+    // 前进2s → 后退2s → 循环
+    auto elapsed = (this->now() - start_time_).seconds();
+    int cycle = static_cast<int>(elapsed) % 4;  // 0,1,2,3
+    double speed = (cycle < 2) ? forward_speed_ : -forward_speed_;
+    publishVelocity(speed, 0.0, 0.0, 0.0);
   }
 
   rclcpp::Client<ardupilot_msgs::srv::ModeSwitch>::SharedPtr mode_switch_client_;
   rclcpp::Client<ardupilot_msgs::srv::ArmMotors>::SharedPtr arm_motors_client_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr vel_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Time start_time_;
   double forward_speed_;
 };
 
